@@ -1,26 +1,29 @@
 using UnityEngine;
 
-public class Bullet : MonoBehaviour
+namespace ShootEmAll
 {
-
-    float speed = 20;
-    float startTime;
-    float lifeTime = 1;
-    public GameObject owner { get; set; }
-
-    private void Start()
+    public class Bullet : MonoBehaviour
     {
-        startTime = Time.time;
-    }
 
-    void Update()
-    {
-        transform.position += transform.forward * Time.deltaTime * speed;
+        float speed = 20;
+        float startTime;
+        float lifeTime = 1;
+        public GameObject owner { get; set; }
 
-        if (Time.time > startTime+lifeTime)
+        private void Start()
         {
-            Destroy(this.gameObject);
+            startTime = Time.time;
         }
-    }
 
+        void Update()
+        {
+            transform.position += transform.forward * Time.deltaTime * speed;
+
+            if (Time.time > startTime + lifeTime)
+            {
+                Destroy(this.gameObject);
+            }
+        }
+
+    }
 }

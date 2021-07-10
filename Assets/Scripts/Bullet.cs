@@ -8,7 +8,7 @@ namespace ShootEmAll
         float speed = 20;
         float startTime;
         float lifeTime = 1;
-        public GameObject owner { get; set; }
+        public uint owner { get; set; }
 
         private void Start()
         {

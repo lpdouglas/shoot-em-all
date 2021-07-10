@@ -1,8 +1,9 @@
+using Mirror;
 using UnityEngine;
 
 namespace ShootEmAll
 {
-    public class Player : MonoBehaviour
+    public class Player : NetworkBehaviour
     {
         public Bullet bulletPrefab;
         public GameObject bulletPosition;
@@ -13,33 +14,50 @@ namespace ShootEmAll
         bool fire;
         float fireLastTime;
         float fireInterval = 0.5f;
-        bool died = false;
+        [SyncVar] bool died = false;
 
+
+        private void Start()
+        {
+            transform.position = transform.position + new Vector3(Random.Range(-10, 10), 0, Random.Range(-10, 10));
+        }
         void Update()
         {
+            if (!isLocalPlayer) return;
             if (died) return;
 
-            x = Input.GetAxis("Horizontal");
-            z = Input.GetAxis("Vertical");
+            x = Input.GetAxisRaw("Horizontal");
+            z = Input.GetAxisRaw("Vertical");
             fire = Input.GetButton("Fire1");
 
 
             float speedDelta = Time.deltaTime * speed;
             if (x != 0 || z != 0)
             {
-                Vector3 movement = new Vector3(x * speedDelta, 0, z * speedDelta);
+                Vector3 movement = new Vector3(x, 0, z).normalized * speedDelta;
                 transform.position = transform.position + movement;
                 transform.rotation = Quaternion.LookRotation(movement);
             }
 
             if (fire && fireLastTime < Time.time)
             {
+                CmdFire();
                 fireLastTime = Time.time + fireInterval;
-                Bullet bullet = Instantiate(bulletPrefab, bulletPosition.transform.position, bulletPosition.transform.rotation);
-                bullet.owner = this.gameObject;
             }
         }
 
+        [Command]
+        private void CmdFire()
+        {
+            if (fireLastTime < Time.time)
+            {
+                fireLastTime = Time.time + fireInterval;
+                Bullet bullet = Instantiate(bulletPrefab, bulletPosition.transform.position, bulletPosition.transform.rotation);
+                bullet.owner = netId;                
+                NetworkServer.Spawn(bullet.gameObject);
+            }
+        }
+        
         void Die()
         {
             died = true;
@@ -47,9 +65,11 @@ namespace ShootEmAll
 
         private void OnTriggerEnter(Collider other)
         {
+            if (!isServer) return;
+
             Bullet bullet = other.GetComponentInParent<Bullet>();
             if (bullet == null) return;
-            if (bullet.owner == this.gameObject) return;
+            if (bullet.owner == netId) return;
 
             Debug.Log(other);
             Die();
